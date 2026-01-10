@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from pydantic import BaseModel
 from uuid import uuid4
-from mangum import Mangum
 import os
 
 app = FastAPI(
@@ -17,7 +16,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -214,10 +213,13 @@ async def root():
     ]
     
     for html_path in possible_paths:
-        if os.path.exists(html_path):
-            return FileResponse(html_path)
+        try:
+            if os.path.exists(html_path):
+                return FileResponse(html_path)
+        except Exception:
+            continue
     
-    return {
+    return JSONResponse(content={
         "message": "Job Skill Architecture API",
         "version": "1.0.0",
         "endpoints": {
@@ -228,7 +230,7 @@ async def root():
             "skills": "/api/skills",
             "skill_by_name": "/api/skills/{skill_name}"
         }
-    }
+    })
 
 
 @app.get("/api/jobs", response_model=List[Job])
@@ -313,4 +315,5 @@ async def get_recommended_skills(job_id: str):
 
 # Vercel serverless handler
 from mangum import Mangum
-handler = Mangum(app, lifespan="off")
+
+handler = Mangum(app)

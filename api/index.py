@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from pydantic import BaseModel
 from uuid import uuid4
+from mangum import Mangum
 import os
 
 app = FastAPI(
@@ -313,7 +314,5 @@ async def get_recommended_skills(job_id: str):
     ]
 
 
-# Vercel serverless handler
-from mangum import Mangum
-
+# Vercel serverless handler - must be at module level
 handler = Mangum(app)

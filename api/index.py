@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uuid import uuid4
 import os
 
@@ -554,6 +554,118 @@ async def get_recommended_skills(job_id: str):
         skill for skill in job.skills 
         if skill.annotation and skill.annotation.preferred and not skill.annotation.required
     ]
+
+
+# HROpen Skills API Models (based on openapi.yaml)
+class SkillKeyword(BaseModel):
+    name: str
+    value: Optional[str] = None
+
+
+class SkillModel(BaseModel):
+    id: str  # URI format
+    name: Optional[str] = None
+    description: Optional[str] = None
+    codedNotation: Optional[str] = None
+    ctid: Optional[str] = None
+    keywords: Optional[List[SkillKeyword]] = None
+    verifications: Optional[List[dict]] = None
+
+
+class ProficiencyLevel(BaseModel):
+    type: str = Field(default="DefinedTerm", alias="@type")
+    name: str
+    
+    class Config:
+        populate_by_name = True
+
+
+class SkillAssertion(BaseModel):
+    type: str = Field(default="SkillAssertion", alias="@type")
+    skill: SkillModel
+    proficiencyLevel: ProficiencyLevel
+    validationStatus: str  # Validated, Provisional, Proposed, Expired
+    validFrom: str
+    validUntil: Optional[str] = None
+    
+    class Config:
+        populate_by_name = True
+
+
+class ReferencedObject(BaseModel):
+    id: str  # URI
+    type: Optional[str] = None
+
+
+class SkillsResponse(BaseModel):
+    context: str = Field(default="https://schema.hropenstandards.org/4.5/recruiting/rdf/SkillsApi.json", alias="@context")
+    object: Optional[ReferencedObject] = None
+    proficiencyScales: Optional[List[dict]] = []
+    skills: List[SkillAssertion]
+    
+    class Config:
+        populate_by_name = True
+
+
+@app.get("/skills", response_model=SkillsResponse)
+async def get_skills_api(identifier: str):
+    """
+    HROpen Skills API endpoint - Get skill assertions for a JEDx object
+    
+    Maps JEDx job skills to the Skills API format, where:
+    - Required skills -> validationStatus: 'Validated'
+    - Preferred skills -> validationStatus: 'Provisional'
+    """
+    # Extract job ID from identifier URI (e.g., "https://api.example.com/jedx/jobs/JDX-001" or "JDX-001")
+    job_id = identifier.split("/")[-1] if "/" in identifier else identifier
+    
+    # Find the job
+    job = next((j for j in sample_jobs if j.positionID == job_id), None)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job with identifier {identifier} not found")
+    
+    # Build skill assertions from job skills
+    skill_assertions = []
+    for job_skill in job.skills:
+        # Determine validation status based on annotation
+        validation_status = "Validated"  # default for required
+        proficiency_name = "Required"
+        
+        if job_skill.annotation:
+            if job_skill.annotation.preferred and not job_skill.annotation.required:
+                validation_status = "Provisional"
+                proficiency_name = "Preferred"
+            elif job_skill.annotation.required:
+                validation_status = "Validated"
+                proficiency_name = "Required"
+        
+        # Create skill URI (simplified - could use a proper skill taxonomy URI)
+        skill_id = f"https://api.example.com/skills/{job_skill.name.lower().replace(' ', '-')}"
+        
+        # Build skill assertion
+        skill_assertion = SkillAssertion(
+            skill=SkillModel(
+                id=skill_id,
+                name=job_skill.name,
+                description=job_skill.description
+            ),
+            proficiencyLevel=ProficiencyLevel(name=proficiency_name),
+            validationStatus=validation_status,
+            validFrom=job.dateCreated
+        )
+        skill_assertions.append(skill_assertion)
+    
+    # Build referenced object
+    job_uri = f"https://api.example.com/jedx/jobs/{job.positionID}"
+    referenced_object = ReferencedObject(
+        id=job_uri,
+        type="JobPosting"
+    )
+    
+    return SkillsResponse(
+        object=referenced_object,
+        skills=skill_assertions
+    )
 
 
 # Serverless handler (for Vercel/Lambda - not needed for Render)

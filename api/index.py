@@ -37,16 +37,16 @@ class HiringOrganization(BaseModel):
 
 
 class SkillAnnotation(BaseModel):
-    required: Optional[bool] = False
-    preferred: Optional[bool] = False
+    required: Optional[bool] = None
+    preferred: Optional[bool] = None
     requiredAtHiring: Optional[bool] = None
-    acquisitionDifficulty: Optional[float] = None
 
 
 class JobSkill(BaseModel):
     name: str
     description: Optional[str] = None
     yearsOfExperience: Optional[int] = None
+
     annotation: Optional[SkillAnnotation] = None
 
 
@@ -71,7 +71,7 @@ class JobWithSkillsResponse(BaseModel):
     recommended_skills: List[JobSkill]
 
 
-# JobPostingType Models (based on JobPostingType.json schema)
+# JEDx JobPosting Models (based on JobPostingType.json)
 class ScaleAnnotation(BaseModel):
     required: Optional[bool] = None
     preferred: Optional[bool] = None
@@ -324,7 +324,8 @@ async def root():
             "job_by_id": "/api/jobs/{job_id}",
             "job_with_skills": "/api/jobs/{job_id}/skills",
             "skills": "/api/skills",
-            "skill_by_name": "/api/skills/{skill_name}"
+            "skill_by_name": "/api/skills/{skill_name}",
+            "skills_api": "/skills"
         }
     })
 
@@ -337,7 +338,6 @@ async def get_all_jobs():
 
 def transform_job_to_posting(job: Job) -> JobPosting:
     """Transform a Job to JobPosting format based on JobPostingType schema"""
-    # Transform skills to AnnotatedDefinedTerm format
     skills = []
     for skill in job.skills:
         annotation = None
@@ -353,31 +353,34 @@ def transform_job_to_posting(job: Job) -> JobPosting:
             descriptions=[skill.description] if skill.description else None,
             annotation=annotation
         ))
-    
-    # Transform hiring organization
+
     hiring_org = JDXOrganization(legalName=job.hiringOrganization.legalName)
-    
-    # Job-specific data based on positionID
-    responsibilities = []
-    required_experiences = []
-    required_credentials = []
-    
+
+    # Populate responsibilities, requiredExperiences, requiredCredentials based on job.positionID
+    responsibilities_data = []
+    required_experiences_data = []
+    required_credentials_data = []
+
     if job.positionID == "JDX-001":  # Senior Backend Developer
-        responsibilities = [
+        responsibilities_data = [
             AnnotatedDefinedTerm(
-                name="Backend API Development",
-                descriptions=["Design, develop, and maintain scalable REST APIs and microservices", "Implement business logic and data processing pipelines", "Optimize API performance and ensure high availability"]
+                name="Design and develop backend services",
+                descriptions=["Lead the design and implementation of scalable backend systems using Python and FastAPI.", "Architect scalable backend systems", "Design system integrations and data flows", "Lead technical design discussions and code reviews"]
             ),
             AnnotatedDefinedTerm(
-                name="Database Architecture",
-                descriptions=["Design and implement database schemas", "Optimize database queries and performance", "Manage database migrations and data integrity"]
+                name="Database management",
+                descriptions=["Manage and optimize PostgreSQL databases, ensuring data integrity and performance.", "Design and optimize database schemas", "Implement database migrations and versioning", "Monitor and tune database performance"]
+            ),
+            AnnotatedDefinedTerm(
+                name="API development",
+                descriptions=["Develop and maintain robust RESTful APIs for various client applications.", "Design RESTful API endpoints", "Implement API versioning and documentation", "Ensure API security and authentication"]
             ),
             AnnotatedDefinedTerm(
                 name="System Architecture",
                 descriptions=["Architect scalable backend systems", "Design system integrations and data flows", "Lead technical design discussions and code reviews"]
             )
         ]
-        required_experiences = [
+        required_experiences_data = [
             {
                 "duration": "P5Y",
                 "descriptions": ["Backend software development experience"],
@@ -389,61 +392,61 @@ def transform_job_to_posting(job: Job) -> JobPosting:
                 "experienceCategories": [{"descriptions": ["Work Experience"]}]
             }
         ]
-        required_credentials = [
+        required_credentials_data = [
             {
                 "programConcentration": "Computer Science",
                 "descriptions": ["BS"]
             }
         ]
     elif job.positionID == "JDX-002":  # Full Stack Developer
-        responsibilities = [
+        responsibilities_data = [
             AnnotatedDefinedTerm(
                 name="Full Stack Development",
                 descriptions=["Develop both frontend and backend components of web applications", "Create responsive user interfaces and RESTful APIs", "Integrate frontend and backend systems"]
             ),
             AnnotatedDefinedTerm(
-                name="Database Management",
-                descriptions=["Design and maintain database schemas", "Write efficient SQL queries and stored procedures", "Implement database optimization strategies"]
+                name="Collaborate with design team",
+                descriptions=["Work closely with designers to translate mockups into functional web applications", "Participate in design reviews and provide technical feedback", "Ensure UI/UX best practices"]
             ),
             AnnotatedDefinedTerm(
-                name="Application Integration",
-                descriptions=["Integrate third-party APIs and services", "Implement authentication and authorization", "Ensure seamless data flow between systems"]
+                name="Maintain existing codebase",
+                descriptions=["Debug and improve existing features, ensuring high code quality", "Refactor legacy code", "Write and maintain unit tests"]
             )
         ]
-        required_experiences = [
+        required_experiences_data = [
             {
                 "duration": "P3Y",
-                "descriptions": ["Full stack web development experience"],
+                "descriptions": ["Full-stack web development"],
                 "experienceCategories": [{"descriptions": ["Work Experience"]}]
             },
             {
                 "duration": "P2Y",
-                "descriptions": ["API design and database management"],
+                "descriptions": ["Frontend framework experience (e.g., React, Vue)"],
                 "experienceCategories": [{"descriptions": ["Work Experience"]}]
             }
         ]
-        required_credentials = [
+        required_credentials_data = [
             {
-                "programConcentration": "Computer Science",
+                "programConcentration": "Software Engineering",
                 "descriptions": ["BS"]
             }
         ]
     elif job.positionID == "JDX-003":  # DevOps Engineer
-        responsibilities = [
+        responsibilities_data = [
             AnnotatedDefinedTerm(
-                name="Infrastructure Management",
-                descriptions=["Design, implement, and maintain cloud infrastructure", "Manage CI/CD pipelines and deployment automation", "Monitor and optimize system performance and reliability"]
+                name="Manage CI/CD pipelines",
+                descriptions=["Oversee and optimize continuous integration and continuous deployment pipelines", "Automate build, test, and deployment processes", "Monitor pipeline performance and reliability"]
             ),
             AnnotatedDefinedTerm(
-                name="Container Orchestration",
-                descriptions=["Manage containerized applications with Docker and Kubernetes", "Implement infrastructure as code (IaC)", "Ensure high availability and disaster recovery"]
+                name="Cloud infrastructure management",
+                descriptions=["Manage and provision cloud resources on AWS using Infrastructure as Code", "Design and implement scalable cloud architectures", "Optimize cloud costs and resource utilization"]
             ),
             AnnotatedDefinedTerm(
-                name="DevOps Practices",
-                descriptions=["Implement automation for testing, building, and deployment", "Manage configuration and secrets", "Collaborate with development teams on deployment strategies"]
+                name="Container orchestration",
+                descriptions=["Implement and maintain Docker and Kubernetes solutions", "Manage containerized applications", "Ensure container security and best practices"]
             )
         ]
-        required_experiences = [
+        required_experiences_data = [
             {
                 "duration": "P4Y",
                 "descriptions": ["DevOps or infrastructure engineering experience"],
@@ -451,17 +454,17 @@ def transform_job_to_posting(job: Job) -> JobPosting:
             },
             {
                 "duration": "P3Y",
-                "descriptions": ["Cloud infrastructure management and CI/CD"],
+                "descriptions": ["AWS cloud services management"],
                 "experienceCategories": [{"descriptions": ["Work Experience"]}]
             }
         ]
-        required_credentials = [
+        required_credentials_data = [
             {
-                "programConcentration": "Computer Science",
-                "descriptions": ["BS"]
+                "programConcentration": "Cloud Computing",
+                "descriptions": ["AWS Certified DevOps Engineer"]
             }
         ]
-    
+
     return JobPosting(
         identifiers=job.identifiers,
         name=job.name,
@@ -471,11 +474,11 @@ def transform_job_to_posting(job: Job) -> JobPosting:
         hiringOrganization=hiring_org,
         dateCreated=job.dateCreated,
         skills=skills,
-        responsibilities=responsibilities,
-        requiredExperiences=required_experiences,
-        requiredCredentials=required_credentials,
         employerOverview=[f"Position at {job.hiringOrganization.legalName}"],
-        qualificationSummary=[f"{job.name} position requiring various technical skills"]
+        qualificationSummary=[f"{job.name} position requiring various technical skills"],
+        responsibilities=responsibilities_data,
+        requiredExperiences=required_experiences_data,
+        requiredCredentials=required_credentials_data
     )
 
 
@@ -486,7 +489,6 @@ async def get_job_by_id(job_id: str):
     if not job:
         raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
     
-    # Transform to JobPosting format
     job_posting = transform_job_to_posting(job)
     return job_posting
 
@@ -607,6 +609,76 @@ class SkillsResponse(BaseModel):
         populate_by_name = True
 
 
+@app.get("/skills", response_model=SkillsResponse)
+async def get_skills_api(identifier: str):
+    """
+    HROpen Skills API endpoint - Get skill assertions for a JEDx object
+    
+    Maps JEDx job skills to the Skills API format.
+    Proficiency levels: Required/Preferred skills -> "Proficient"/"Advanced", Preferred only -> "Developing"
+    """
+    # Extract job ID from identifier URI (e.g., "https://api.hropenstandards.org/jedx/jobs/JDX-001" or "JDX-001")
+    job_id = identifier.split("/")[-1] if "/" in identifier else identifier
+    
+    # Find the job
+    job = next((j for j in sample_jobs if j.positionID == job_id), None)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job with identifier {identifier} not found")
+    
+    # Build skill assertions from job skills
+    skill_assertions = []
+    for job_skill in job.skills:
+        # Determine validation status and proficiency level based on annotation
+        validation_status = "Validated"
+        proficiency_name = "Proficient"  # Default proficiency level
+        
+        if job_skill.annotation:
+            if job_skill.annotation.preferred and not job_skill.annotation.required:
+                # Preferred only -> Provisional status, Developing proficiency
+                validation_status = "Provisional"
+                proficiency_name = "Developing"
+            elif job_skill.annotation.required:
+                if job_skill.annotation.requiredAtHiring:
+                    # Required at hiring -> Validated status, Advanced proficiency
+                    validation_status = "Validated"
+                    proficiency_name = "Advanced"
+                else:
+                    # Required but not at hiring -> Validated status, Proficient proficiency
+                    validation_status = "Validated"
+                    proficiency_name = "Proficient"
+        
+        # Create skill URI and coded notation
+        skill_slug = job_skill.name.lower().replace(' ', '-')
+        skill_id = f"https://example.com/skills/{skill_slug}"
+        
+        # Generate a simple coded notation (first 2-3 letters of each word, number)
+        coded_notation = ''.join([word[:2].upper() for word in job_skill.name.split()[:2]]) + f"-{len(skill_assertions) + 1:03d}"
+        
+        # Build skill assertion
+        skill_assertion = SkillAssertion(
+            skill=SkillModel(
+                id=skill_id,
+                name=job_skill.name,
+                description=job_skill.description,
+                codedNotation=coded_notation
+            ),
+            proficiencyLevel=ProficiencyLevel(name=proficiency_name),
+            validationStatus=validation_status,
+            validFrom=job.dateCreated
+        )
+        skill_assertions.append(skill_assertion)
+    
+    # Build referenced object with proper URI format
+    job_uri = f"https://api.hropenstandards.org/jedx/jobs/{job.positionID}"
+    referenced_object = ReferencedObject(
+        id=job_uri,
+        type="JobPosting"
+    )
+    
+    return SkillsResponse(
+        object=referenced_object,
+        skills=skill_assertions
+    )
 
 
 # Serverless handler (for Vercel/Lambda - not needed for Render)

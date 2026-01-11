@@ -314,5 +314,5 @@ async def get_recommended_skills(job_id: str):
     ]
 
 
-# Vercel serverless handler - must be at module level
+# Vercel serverless handler
 handler = Mangum(app)

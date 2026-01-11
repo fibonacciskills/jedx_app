@@ -69,6 +69,99 @@ class JobWithSkillsResponse(BaseModel):
     recommended_skills: List[JobSkill]
 
 
+# JobPostingType Models (based on JobPostingType.json schema)
+class ScaleAnnotation(BaseModel):
+    required: Optional[bool] = None
+    preferred: Optional[bool] = None
+    requiredAtHiring: Optional[bool] = None
+    acquisitionDifficulty: Optional[float] = None
+    acquiredInternally: Optional[bool] = None
+    descriptions: Optional[List[str]] = None
+
+
+class AnnotatedDefinedTerm(BaseModel):
+    name: str
+    termCode: Optional[str] = None
+    descriptions: Optional[List[str]] = None
+    annotation: Optional[ScaleAnnotation] = None
+
+
+class JDXOrganization(BaseModel):
+    name: Optional[str] = None
+    legalName: Optional[str] = None
+    descriptions: Optional[List[str]] = None
+
+
+class Place(BaseModel):
+    name: Optional[str] = None
+    address: Optional[dict] = None
+    descriptions: Optional[List[str]] = None
+
+
+class JobPosting(BaseModel):
+    """JobPosting model based on JobPostingType.json schema"""
+    identifiers: Optional[List[Identifier]] = []
+    name: Optional[str] = None
+    title: Optional[str] = None
+    positionID: Optional[str] = None
+    postingID: Optional[str] = None
+    hiringOrganization: Optional[JDXOrganization] = None
+    dateCreated: Optional[str] = None
+    datePosted: Optional[str] = None
+    dateModified: Optional[str] = None
+    validFrom: Optional[str] = None
+    validThrough: Optional[str] = None
+    
+    # Skills and competencies
+    skills: Optional[List[AnnotatedDefinedTerm]] = []
+    abilities: Optional[List[AnnotatedDefinedTerm]] = []
+    knowledge: Optional[List[AnnotatedDefinedTerm]] = []
+    competencies: Optional[List[AnnotatedDefinedTerm]] = []
+    responsibilities: Optional[List[AnnotatedDefinedTerm]] = []
+    tasks: Optional[List[AnnotatedDefinedTerm]] = []
+    workActivities: Optional[List[AnnotatedDefinedTerm]] = []
+    technologies: Optional[List[AnnotatedDefinedTerm]] = []
+    
+    # Experience and credentials
+    requiredExperiences: Optional[List[dict]] = []
+    preferredExperiences: Optional[List[dict]] = []
+    requiredCredentials: Optional[List[dict]] = []
+    preferredCredentials: Optional[List[dict]] = []
+    requiredEducation: Optional[List[dict]] = []
+    preferredEducation: Optional[List[dict]] = []
+    
+    # Job details
+    jobLocation: Optional[Place] = None
+    jobLocationTypes: Optional[List[str]] = []
+    jobSchedules: Optional[List[AnnotatedDefinedTerm]] = []
+    jobTerms: Optional[List[AnnotatedDefinedTerm]] = []
+    jobBenefits: Optional[List[str]] = []
+    baseSalaries: Optional[List[dict]] = []
+    estimatedSalaries: Optional[List[dict]] = []
+    
+    # Additional fields
+    employerOverview: Optional[List[str]] = []
+    qualificationSummary: Optional[List[str]] = []
+    formattedDescriptions: Optional[List[str]] = []
+    shiftSchedules: Optional[List[str]] = []
+    workHours: Optional[List[str]] = []
+    
+    # Categories
+    industries: Optional[List[str]] = []
+    industryCodes: Optional[List[AnnotatedDefinedTerm]] = []
+    occupationCategories: Optional[List[AnnotatedDefinedTerm]] = []
+    careerLevels: Optional[List[AnnotatedDefinedTerm]] = []
+    experienceCategories: Optional[List[AnnotatedDefinedTerm]] = []
+    educationLevels: Optional[List[AnnotatedDefinedTerm]] = []
+    
+    # Additional optional fields (many more available in schema)
+    totalJobOpenings: Optional[int] = None
+    jobImmediateStart: Optional[bool] = None
+    disclaimers: Optional[List[str]] = []
+    specialCommitments: Optional[List[str]] = []
+    travelRequirements: Optional[List[str]] = []
+
+
 # Sample Data
 sample_skills = [
     Skill(name="Python Programming", description="Proficiency in Python programming language", yearsOfExperience=3),
@@ -240,13 +333,52 @@ async def get_all_jobs():
     return sample_jobs
 
 
-@app.get("/api/jobs/{job_id}", response_model=Job)
+def transform_job_to_posting(job: Job) -> JobPosting:
+    """Transform a Job to JobPosting format based on JobPostingType schema"""
+    # Transform skills to AnnotatedDefinedTerm format
+    skills = []
+    for skill in job.skills:
+        annotation = None
+        if skill.annotation:
+            annotation = ScaleAnnotation(
+                required=skill.annotation.required,
+                preferred=skill.annotation.preferred,
+                requiredAtHiring=skill.annotation.requiredAtHiring,
+                acquisitionDifficulty=skill.annotation.acquisitionDifficulty
+            )
+        skills.append(AnnotatedDefinedTerm(
+            name=skill.name,
+            descriptions=[skill.description] if skill.description else None,
+            annotation=annotation
+        ))
+    
+    # Transform hiring organization
+    hiring_org = JDXOrganization(legalName=job.hiringOrganization.legalName)
+    
+    return JobPosting(
+        identifiers=job.identifiers,
+        name=job.name,
+        title=job.name,
+        positionID=job.positionID,
+        postingID=job.positionID,
+        hiringOrganization=hiring_org,
+        dateCreated=job.dateCreated,
+        skills=skills,
+        employerOverview=[f"Position at {job.hiringOrganization.legalName}"],
+        qualificationSummary=[f"{job.name} position requiring various technical skills"]
+    )
+
+
+@app.get("/api/jobs/{job_id}", response_model=JobPosting)
 async def get_job_by_id(job_id: str):
-    """Get a specific job by position ID"""
+    """Get a specific job by position ID in JobPostingType format"""
     job = next((j for j in sample_jobs if j.positionID == job_id), None)
     if not job:
         raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
-    return job
+    
+    # Transform to JobPosting format
+    job_posting = transform_job_to_posting(job)
+    return job_posting
 
 
 @app.get("/api/jobs/{job_id}/skills", response_model=JobWithSkillsResponse)

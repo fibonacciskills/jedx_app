@@ -607,65 +607,6 @@ class SkillsResponse(BaseModel):
         populate_by_name = True
 
 
-@app.get("/skills", response_model=SkillsResponse)
-async def get_skills_api(identifier: str):
-    """
-    HROpen Skills API endpoint - Get skill assertions for a JEDx object
-    
-    Maps JEDx job skills to the Skills API format, where:
-    - Required skills -> validationStatus: 'Validated'
-    - Preferred skills -> validationStatus: 'Provisional'
-    """
-    # Extract job ID from identifier URI (e.g., "https://api.example.com/jedx/jobs/JDX-001" or "JDX-001")
-    job_id = identifier.split("/")[-1] if "/" in identifier else identifier
-    
-    # Find the job
-    job = next((j for j in sample_jobs if j.positionID == job_id), None)
-    if not job:
-        raise HTTPException(status_code=404, detail=f"Job with identifier {identifier} not found")
-    
-    # Build skill assertions from job skills
-    skill_assertions = []
-    for job_skill in job.skills:
-        # Determine validation status based on annotation
-        validation_status = "Validated"  # default for required
-        proficiency_name = "Required"
-        
-        if job_skill.annotation:
-            if job_skill.annotation.preferred and not job_skill.annotation.required:
-                validation_status = "Provisional"
-                proficiency_name = "Preferred"
-            elif job_skill.annotation.required:
-                validation_status = "Validated"
-                proficiency_name = "Required"
-        
-        # Create skill URI (simplified - could use a proper skill taxonomy URI)
-        skill_id = f"https://api.example.com/skills/{job_skill.name.lower().replace(' ', '-')}"
-        
-        # Build skill assertion
-        skill_assertion = SkillAssertion(
-            skill=SkillModel(
-                id=skill_id,
-                name=job_skill.name,
-                description=job_skill.description
-            ),
-            proficiencyLevel=ProficiencyLevel(name=proficiency_name),
-            validationStatus=validation_status,
-            validFrom=job.dateCreated
-        )
-        skill_assertions.append(skill_assertion)
-    
-    # Build referenced object
-    job_uri = f"https://api.example.com/jedx/jobs/{job.positionID}"
-    referenced_object = ReferencedObject(
-        id=job_uri,
-        type="JobPosting"
-    )
-    
-    return SkillsResponse(
-        object=referenced_object,
-        skills=skill_assertions
-    )
 
 
 # Serverless handler (for Vercel/Lambda - not needed for Render)

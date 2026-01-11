@@ -357,6 +357,111 @@ def transform_job_to_posting(job: Job) -> JobPosting:
     # Transform hiring organization
     hiring_org = JDXOrganization(legalName=job.hiringOrganization.legalName)
     
+    # Job-specific data based on positionID
+    responsibilities = []
+    required_experiences = []
+    required_credentials = []
+    
+    if job.positionID == "JDX-001":  # Senior Backend Developer
+        responsibilities = [
+            AnnotatedDefinedTerm(
+                name="Backend API Development",
+                descriptions=["Design, develop, and maintain scalable REST APIs and microservices", "Implement business logic and data processing pipelines", "Optimize API performance and ensure high availability"]
+            ),
+            AnnotatedDefinedTerm(
+                name="Database Architecture",
+                descriptions=["Design and implement database schemas", "Optimize database queries and performance", "Manage database migrations and data integrity"]
+            ),
+            AnnotatedDefinedTerm(
+                name="System Architecture",
+                descriptions=["Architect scalable backend systems", "Design system integrations and data flows", "Lead technical design discussions and code reviews"]
+            )
+        ]
+        required_experiences = [
+            {
+                "duration": "P5Y",
+                "descriptions": ["Backend software development experience"],
+                "experienceCategories": [{"descriptions": ["Work Experience"]}]
+            },
+            {
+                "duration": "P3Y",
+                "descriptions": ["API development and RESTful service design"],
+                "experienceCategories": [{"descriptions": ["Work Experience"]}]
+            }
+        ]
+        required_credentials = [
+            {
+                "programConcentration": "Computer Science",
+                "descriptions": ["BS"]
+            }
+        ]
+    elif job.positionID == "JDX-002":  # Full Stack Developer
+        responsibilities = [
+            AnnotatedDefinedTerm(
+                name="Full Stack Development",
+                descriptions=["Develop both frontend and backend components of web applications", "Create responsive user interfaces and RESTful APIs", "Integrate frontend and backend systems"]
+            ),
+            AnnotatedDefinedTerm(
+                name="Database Management",
+                descriptions=["Design and maintain database schemas", "Write efficient SQL queries and stored procedures", "Implement database optimization strategies"]
+            ),
+            AnnotatedDefinedTerm(
+                name="Application Integration",
+                descriptions=["Integrate third-party APIs and services", "Implement authentication and authorization", "Ensure seamless data flow between systems"]
+            )
+        ]
+        required_experiences = [
+            {
+                "duration": "P3Y",
+                "descriptions": ["Full stack web development experience"],
+                "experienceCategories": [{"descriptions": ["Work Experience"]}]
+            },
+            {
+                "duration": "P2Y",
+                "descriptions": ["API design and database management"],
+                "experienceCategories": [{"descriptions": ["Work Experience"]}]
+            }
+        ]
+        required_credentials = [
+            {
+                "programConcentration": "Computer Science",
+                "descriptions": ["BS"]
+            }
+        ]
+    elif job.positionID == "JDX-003":  # DevOps Engineer
+        responsibilities = [
+            AnnotatedDefinedTerm(
+                name="Infrastructure Management",
+                descriptions=["Design, implement, and maintain cloud infrastructure", "Manage CI/CD pipelines and deployment automation", "Monitor and optimize system performance and reliability"]
+            ),
+            AnnotatedDefinedTerm(
+                name="Container Orchestration",
+                descriptions=["Manage containerized applications with Docker and Kubernetes", "Implement infrastructure as code (IaC)", "Ensure high availability and disaster recovery"]
+            ),
+            AnnotatedDefinedTerm(
+                name="DevOps Practices",
+                descriptions=["Implement automation for testing, building, and deployment", "Manage configuration and secrets", "Collaborate with development teams on deployment strategies"]
+            )
+        ]
+        required_experiences = [
+            {
+                "duration": "P4Y",
+                "descriptions": ["DevOps or infrastructure engineering experience"],
+                "experienceCategories": [{"descriptions": ["Work Experience"]}]
+            },
+            {
+                "duration": "P3Y",
+                "descriptions": ["Cloud infrastructure management and CI/CD"],
+                "experienceCategories": [{"descriptions": ["Work Experience"]}]
+            }
+        ]
+        required_credentials = [
+            {
+                "programConcentration": "Computer Science",
+                "descriptions": ["BS"]
+            }
+        ]
+    
     return JobPosting(
         identifiers=job.identifiers,
         name=job.name,
@@ -366,6 +471,9 @@ def transform_job_to_posting(job: Job) -> JobPosting:
         hiringOrganization=hiring_org,
         dateCreated=job.dateCreated,
         skills=skills,
+        responsibilities=responsibilities,
+        requiredExperiences=required_experiences,
+        requiredCredentials=required_credentials,
         employerOverview=[f"Position at {job.hiringOrganization.legalName}"],
         qualificationSummary=[f"{job.name} position requiring various technical skills"]
     )

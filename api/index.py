@@ -4,8 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from pydantic import BaseModel
 from uuid import uuid4
-from mangum import Mangum
 import os
+
+# Mangum only needed for Vercel/Lambda - not for Render
+# from mangum import Mangum
 
 app = FastAPI(
     title="Job Skill Architecture API",
@@ -446,5 +448,6 @@ async def get_recommended_skills(job_id: str):
     ]
 
 
-# Vercel serverless handler
-handler = Mangum(app)
+# Serverless handler (for Vercel/Lambda - not needed for Render)
+# Uncomment if deploying to Vercel:
+# handler = Mangum(app)

@@ -345,8 +345,7 @@ def transform_job_to_posting(job: Job) -> JobPosting:
             annotation = ScaleAnnotation(
                 required=skill.annotation.required,
                 preferred=skill.annotation.preferred,
-                requiredAtHiring=skill.annotation.requiredAtHiring,
-                acquisitionDifficulty=skill.annotation.acquisitionDifficulty
+                requiredAtHiring=skill.annotation.requiredAtHiring
             )
         skills.append(AnnotatedDefinedTerm(
             name=skill.name,

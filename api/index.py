@@ -564,17 +564,21 @@ class SkillKeyword(BaseModel):
 
 
 class SkillModel(BaseModel):
-    id: str  # URI format
+    id: str = Field(alias="@id")  # URI format
+    type: str = Field(default="schema:Skill", alias="@type")
     name: Optional[str] = None
     description: Optional[str] = None
-    codedNotation: Optional[str] = None
-    ctid: Optional[str] = None
+    codedNotation: Optional[str] = None  # Context will expand to ceterms:codedNotation
+    ctid: Optional[str] = None  # Context will expand to ceterms:ctid
     keywords: Optional[List[SkillKeyword]] = None
     verifications: Optional[List[dict]] = None
+    
+    class Config:
+        populate_by_name = True
 
 
 class ProficiencyLevel(BaseModel):
-    type: str = Field(default="DefinedTerm", alias="@type")
+    type: str = Field(default="schema:DefinedTerm", alias="@type")
     name: str
     
     class Config:
@@ -582,7 +586,7 @@ class ProficiencyLevel(BaseModel):
 
 
 class SkillAssertion(BaseModel):
-    type: str = Field(default="SkillAssertion", alias="@type")
+    type: str = Field(default="schema:SkillAssertion", alias="@type")
     skill: SkillModel
     proficiencyLevel: ProficiencyLevel
     validationStatus: str  # Validated, Provisional, Proposed, Expired
@@ -594,12 +598,53 @@ class SkillAssertion(BaseModel):
 
 
 class ReferencedObject(BaseModel):
-    id: str  # URI
-    type: Optional[str] = None
+    id: str = Field(alias="@id")  # URI
+    type: Optional[str] = Field(default=None, alias="@type")
+    
+    class Config:
+        populate_by_name = True
 
 
 class SkillsResponse(BaseModel):
-    context: str = Field(default="https://schema.hropenstandards.org/4.5/recruiting/rdf/SkillsApi.json", alias="@context")
+    context: List = Field(
+        default=[
+            "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json",
+            {
+                "@protected": True,
+                "schema": "https://schema.org/",
+                "ceterms": "https://purl.org/ctdl/terms/",
+                "id": "@id",
+                "type": "@type",
+                "Skill": {
+                    "@id": "schema:Skill",
+                    "@context": {
+                        "@protected": True,
+                        "id": "@id",
+                        "type": "@type",
+                        "ctid": "https://purl.org/ctdl/terms/ctid",
+                        "codedNotation": "https://purl.org/ctdl/terms/codedNotation"
+                    }
+                },
+                "SkillAssertion": {
+                    "@id": "schema:SkillAssertion",
+                    "@context": {
+                        "@protected": True,
+                        "id": "@id",
+                        "type": "@type"
+                    }
+                },
+                "ProficiencyLevel": {
+                    "@id": "schema:DefinedTerm",
+                    "@context": {
+                        "@protected": True,
+                        "id": "@id",
+                        "type": "@type"
+                    }
+                }
+            }
+        ],
+        alias="@context"
+    )
     object: Optional[ReferencedObject] = None
     proficiencyScales: Optional[List[dict]] = []
     skills: List[SkillAssertion]
@@ -671,7 +716,7 @@ async def get_skills_api(identifier: str):
     job_uri = f"https://api.hropenstandards.org/jedx/jobs/{job.positionID}"
     referenced_object = ReferencedObject(
         id=job_uri,
-        type="JobPosting"
+        type="schema:JobPosting"
     )
     
     return SkillsResponse(

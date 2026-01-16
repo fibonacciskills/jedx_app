@@ -44,7 +44,7 @@ class SkillAnnotation(BaseModel):
 
 class JobSkill(BaseModel):
     name: str
-    description: Optional[str] = None
+    uri: Optional[str] = None
     proficiency_level: Optional[str] = None
 
     annotation: Optional[SkillAnnotation] = None
@@ -186,31 +186,31 @@ sample_jobs = [
         skills=[
             JobSkill(
                 name="Python Programming",
-                description="Proficiency in Python programming language",
+                uri="https://example.com/skills/python-programming",
                 proficiency_level="Advanced",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="FastAPI Development",
-                description="Experience building REST APIs with FastAPI framework",
+                uri="https://example.com/skills/fastapi-development",
                 proficiency_level="Advanced",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="SQL Database Design",
-                description="Ability to design and optimize SQL databases",
+                uri="https://example.com/skills/sql-database-design",
                 proficiency_level="Proficient",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=False)
             ),
             JobSkill(
                 name="Docker Containerization",
-                description="Experience with containerization using Docker",
+                uri="https://example.com/skills/docker-containerization",
                 proficiency_level="Developing",
                 annotation=SkillAnnotation(preferred=True)
             ),
             JobSkill(
                 name="AWS Cloud Services",
-                description="Knowledge of Amazon Web Services cloud platform",
+                uri="https://example.com/skills/aws-cloud-services",
                 proficiency_level="Developing",
                 annotation=SkillAnnotation(preferred=True)
             ),
@@ -225,31 +225,31 @@ sample_jobs = [
         skills=[
             JobSkill(
                 name="Python Programming",
-                description="Proficiency in Python programming language",
+                uri="https://example.com/skills/python-programming",
                 proficiency_level="Proficient",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="RESTful API Design",
-                description="Understanding of REST principles and API design",
+                uri="https://example.com/skills/restful-api-design",
                 proficiency_level="Proficient",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="PostgreSQL",
-                description="Experience with PostgreSQL database management",
+                uri="https://example.com/skills/postgresql",
                 proficiency_level="Proficient",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=False)
             ),
             JobSkill(
                 name="Git Version Control",
-                description="Proficiency with Git for version control",
+                uri="https://example.com/skills/git-version-control",
                 proficiency_level="Proficient",
                 annotation=SkillAnnotation(preferred=True)
             ),
             JobSkill(
                 name="FastAPI Development",
-                description="Experience building REST APIs with FastAPI framework",
+                uri="https://example.com/skills/fastapi-development",
                 proficiency_level="Developing",
                 annotation=SkillAnnotation(preferred=True)
             ),
@@ -264,31 +264,31 @@ sample_jobs = [
         skills=[
             JobSkill(
                 name="Docker Containerization",
-                description="Experience with containerization using Docker",
+                uri="https://example.com/skills/docker-containerization",
                 proficiency_level="Advanced",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="AWS Cloud Services",
-                description="Knowledge of Amazon Web Services cloud platform",
+                uri="https://example.com/skills/aws-cloud-services",
                 proficiency_level="Advanced",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="Git Version Control",
-                description="Proficiency with Git for version control",
+                uri="https://example.com/skills/git-version-control",
                 proficiency_level="Advanced",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="Python Programming",
-                description="Proficiency in Python programming language",
+                uri="https://example.com/skills/python-programming",
                 proficiency_level="Proficient",
                 annotation=SkillAnnotation(preferred=True)
             ),
             JobSkill(
                 name="SQL Database Design",
-                description="Ability to design and optimize SQL databases",
+                uri="https://example.com/skills/sql-database-design",
                 proficiency_level="Proficient",
                 annotation=SkillAnnotation(preferred=True)
             ),
@@ -563,8 +563,8 @@ class SkillKeyword(BaseModel):
     value: Optional[str] = None
 
 
-class Skill(BaseModel):
-    """Skill model matching OpenAPI schema"""
+class HROpenSkill(BaseModel):
+    """HROpen Skill model matching OpenAPI schema"""
     id: str  # URI format, required
     name: Optional[str] = None
     description: Optional[str] = None
@@ -586,7 +586,7 @@ class ProficiencyLevel(BaseModel):
 class SkillAssertion(BaseModel):
     """SkillAssertion model matching OpenAPI schema"""
     type: str = Field(default="SkillAssertion", alias="@type")
-    skill: Skill
+    skill: HROpenSkill
     proficiencyLevel: ProficiencyLevel
     validationStatus: str  # Proposed, Validated, Provisional, Expired
     validFrom: str  # date-time format
@@ -663,7 +663,7 @@ async def get_skills_api(identifier: str):
         
         # Build skill assertion
         skill_assertion = SkillAssertion(
-            skill=Skill(
+            skill=HROpenSkill(
                 id=skill_id,
                 name=job_skill.name,
                 description=job_skill.description,

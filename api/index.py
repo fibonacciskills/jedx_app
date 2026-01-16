@@ -45,7 +45,7 @@ class SkillAnnotation(BaseModel):
 class JobSkill(BaseModel):
     name: str
     description: Optional[str] = None
-    yearsOfExperience: Optional[int] = None
+    proficiency_level: Optional[str] = None
 
     annotation: Optional[SkillAnnotation] = None
 
@@ -62,7 +62,7 @@ class Job(BaseModel):
 class Skill(BaseModel):
     name: str
     description: Optional[str] = None
-    yearsOfExperience: Optional[int] = None
+    proficiency_level: Optional[str] = None
 
 
 class JobWithSkillsResponse(BaseModel):
@@ -166,14 +166,14 @@ class JobPosting(BaseModel):
 
 # Sample Data
 sample_skills = [
-    Skill(name="Python Programming", description="Proficiency in Python programming language", yearsOfExperience=3),
-    Skill(name="FastAPI Development", description="Experience building REST APIs with FastAPI framework", yearsOfExperience=2),
-    Skill(name="SQL Database Design", description="Ability to design and optimize SQL databases", yearsOfExperience=4),
-    Skill(name="Docker Containerization", description="Experience with containerization using Docker", yearsOfExperience=2),
-    Skill(name="AWS Cloud Services", description="Knowledge of Amazon Web Services cloud platform", yearsOfExperience=3),
-    Skill(name="Git Version Control", description="Proficiency with Git for version control", yearsOfExperience=5),
-    Skill(name="RESTful API Design", description="Understanding of REST principles and API design", yearsOfExperience=3),
-    Skill(name="PostgreSQL", description="Experience with PostgreSQL database management", yearsOfExperience=2),
+    Skill(name="Python Programming", description="Proficiency in Python programming language", proficiency_level="Advanced"),
+    Skill(name="FastAPI Development", description="Experience building REST APIs with FastAPI framework", proficiency_level="Advanced"),
+    Skill(name="SQL Database Design", description="Ability to design and optimize SQL databases", proficiency_level="Proficient"),
+    Skill(name="Docker Containerization", description="Experience with containerization using Docker", proficiency_level="Developing"),
+    Skill(name="AWS Cloud Services", description="Knowledge of Amazon Web Services cloud platform", proficiency_level="Developing"),
+    Skill(name="Git Version Control", description="Proficiency with Git for version control", proficiency_level="Advanced"),
+    Skill(name="RESTful API Design", description="Understanding of REST principles and API design", proficiency_level="Proficient"),
+    Skill(name="PostgreSQL", description="Experience with PostgreSQL database management", proficiency_level="Proficient"),
 ]
 
 sample_jobs = [
@@ -187,31 +187,31 @@ sample_jobs = [
             JobSkill(
                 name="Python Programming",
                 description="Proficiency in Python programming language",
-                yearsOfExperience=3,
+                proficiency_level="Advanced",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="FastAPI Development",
                 description="Experience building REST APIs with FastAPI framework",
-                yearsOfExperience=2,
+                proficiency_level="Advanced",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="SQL Database Design",
                 description="Ability to design and optimize SQL databases",
-                yearsOfExperience=4,
+                proficiency_level="Proficient",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=False)
             ),
             JobSkill(
                 name="Docker Containerization",
                 description="Experience with containerization using Docker",
-                yearsOfExperience=2,
+                proficiency_level="Developing",
                 annotation=SkillAnnotation(preferred=True)
             ),
             JobSkill(
                 name="AWS Cloud Services",
                 description="Knowledge of Amazon Web Services cloud platform",
-                yearsOfExperience=3,
+                proficiency_level="Developing",
                 annotation=SkillAnnotation(preferred=True)
             ),
         ]
@@ -226,31 +226,31 @@ sample_jobs = [
             JobSkill(
                 name="Python Programming",
                 description="Proficiency in Python programming language",
-                yearsOfExperience=2,
+                proficiency_level="Proficient",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="RESTful API Design",
                 description="Understanding of REST principles and API design",
-                yearsOfExperience=3,
+                proficiency_level="Proficient",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="PostgreSQL",
                 description="Experience with PostgreSQL database management",
-                yearsOfExperience=2,
+                proficiency_level="Proficient",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=False)
             ),
             JobSkill(
                 name="Git Version Control",
                 description="Proficiency with Git for version control",
-                yearsOfExperience=3,
+                proficiency_level="Proficient",
                 annotation=SkillAnnotation(preferred=True)
             ),
             JobSkill(
                 name="FastAPI Development",
                 description="Experience building REST APIs with FastAPI framework",
-                yearsOfExperience=1,
+                proficiency_level="Developing",
                 annotation=SkillAnnotation(preferred=True)
             ),
         ]
@@ -265,31 +265,31 @@ sample_jobs = [
             JobSkill(
                 name="Docker Containerization",
                 description="Experience with containerization using Docker",
-                yearsOfExperience=3,
+                proficiency_level="Advanced",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="AWS Cloud Services",
                 description="Knowledge of Amazon Web Services cloud platform",
-                yearsOfExperience=4,
+                proficiency_level="Advanced",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="Git Version Control",
                 description="Proficiency with Git for version control",
-                yearsOfExperience=4,
+                proficiency_level="Advanced",
                 annotation=SkillAnnotation(required=True, requiredAtHiring=True)
             ),
             JobSkill(
                 name="Python Programming",
                 description="Proficiency in Python programming language",
-                yearsOfExperience=2,
+                proficiency_level="Proficient",
                 annotation=SkillAnnotation(preferred=True)
             ),
             JobSkill(
                 name="SQL Database Design",
                 description="Ability to design and optimize SQL databases",
-                yearsOfExperience=2,
+                proficiency_level="Proficient",
                 annotation=SkillAnnotation(preferred=True)
             ),
         ]
@@ -563,86 +563,49 @@ class SkillKeyword(BaseModel):
     value: Optional[str] = None
 
 
-class SkillModel(BaseModel):
-    id: str = Field(alias="@id")  # URI format
-    type: str = Field(default="schema:Skill", alias="@type")
+class Skill(BaseModel):
+    """Skill model matching OpenAPI schema"""
+    id: str  # URI format, required
     name: Optional[str] = None
     description: Optional[str] = None
-    codedNotation: Optional[str] = None  # Context will expand to ceterms:codedNotation
-    ctid: Optional[str] = None  # Context will expand to ceterms:ctid
+    codedNotation: Optional[str] = None
+    ctid: Optional[str] = None
     keywords: Optional[List[SkillKeyword]] = None
     verifications: Optional[List[dict]] = None
-    
-    class Config:
-        populate_by_name = True
 
 
 class ProficiencyLevel(BaseModel):
-    type: str = Field(default="schema:DefinedTerm", alias="@type")
-    name: str
+    """ProficiencyLevel model matching OpenAPI schema"""
+    type: str = Field(default="DefinedTerm", alias="@type")
+    name: str  # Required
     
     class Config:
         populate_by_name = True
 
 
 class SkillAssertion(BaseModel):
-    type: str = Field(default="schema:SkillAssertion", alias="@type")
-    skill: SkillModel
+    """SkillAssertion model matching OpenAPI schema"""
+    type: str = Field(default="SkillAssertion", alias="@type")
+    skill: Skill
     proficiencyLevel: ProficiencyLevel
-    validationStatus: str  # Validated, Provisional, Proposed, Expired
-    validFrom: str
-    validUntil: Optional[str] = None
+    validationStatus: str  # Proposed, Validated, Provisional, Expired
+    validFrom: str  # date-time format
+    validUntil: Optional[str] = None  # date-time format
     
     class Config:
         populate_by_name = True
 
 
 class ReferencedObject(BaseModel):
-    id: str = Field(alias="@id")  # URI
-    type: Optional[str] = Field(default=None, alias="@type")
-    
-    class Config:
-        populate_by_name = True
+    """ReferencedObject model matching OpenAPI schema"""
+    id: Optional[str] = None  # URI
+    type: Optional[str] = None  # e.g., JobPosting, Assessment, Person, Role
 
 
 class SkillsResponse(BaseModel):
-    context: List = Field(
-        default=[
-            "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json",
-            {
-                "@protected": True,
-                "schema": "https://schema.org/",
-                "ceterms": "https://purl.org/ctdl/terms/",
-                "id": "@id",
-                "type": "@type",
-                "Skill": {
-                    "@id": "schema:Skill",
-                    "@context": {
-                        "@protected": True,
-                        "id": "@id",
-                        "type": "@type",
-                        "ctid": "https://purl.org/ctdl/terms/ctid",
-                        "codedNotation": "https://purl.org/ctdl/terms/codedNotation"
-                    }
-                },
-                "SkillAssertion": {
-                    "@id": "schema:SkillAssertion",
-                    "@context": {
-                        "@protected": True,
-                        "id": "@id",
-                        "type": "@type"
-                    }
-                },
-                "ProficiencyLevel": {
-                    "@id": "schema:DefinedTerm",
-                    "@context": {
-                        "@protected": True,
-                        "id": "@id",
-                        "type": "@type"
-                    }
-                }
-            }
-        ],
+    """SkillsResponse model matching OpenAPI schema"""
+    context: str = Field(
+        default="https://schema.hropenstandards.org/4.5/recruiting/rdf/SkillsApi.json",
         alias="@context"
     )
     object: Optional[ReferencedObject] = None
@@ -700,7 +663,7 @@ async def get_skills_api(identifier: str):
         
         # Build skill assertion
         skill_assertion = SkillAssertion(
-            skill=SkillModel(
+            skill=Skill(
                 id=skill_id,
                 name=job_skill.name,
                 description=job_skill.description,
@@ -716,7 +679,7 @@ async def get_skills_api(identifier: str):
     job_uri = f"https://api.hropenstandards.org/jedx/jobs/{job.positionID}"
     referenced_object = ReferencedObject(
         id=job_uri,
-        type="schema:JobPosting"
+        type="JobPosting"
     )
     
     return SkillsResponse(
